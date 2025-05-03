@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photorealistic Prompt Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer components {
+            .btn-primary {
+                @apply inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500;
+            }
+            .btn-secondary {
+                @apply inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500;
+            }
+            .form-input {
+                @apply w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-primary-500 focus:border-primary-500;
+            }
+            .form-output {
+                @apply w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-primary-500 focus:border-primary-500;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors duration-200">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <header class="flex justify-between items-center mb-8">
+            <div class="text-center flex-1">
+                <h1 class="text-4xl font-bold text-gray-800 dark:text-white">Photorealistic Prompt Generator</h1>
+                <p class="text-gray-600 dark:text-gray-400 mt-2">Create detailed prompts for photorealistic image generation</p>
+            </div>
+            <button id="themeToggle" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none">
+                <i class="fas fa-moon dark:hidden"></i>
+                <i class="fas fa-sun hidden dark:block"></i>
+            </button>
+        </header>
+
+        <main class="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 mb-6 transition-colors duration-200">
+            <form id="promptForm" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="subject" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Subject <span class="text-red-500">*</span></label>
+                        <input type="text" id="subject" name="subject" placeholder="e.g., A tabby cat sitting on a windowsill" 
+                               class="form-input">
+                    </div>
+
+                    <div>
+                        <label for="environment" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Environment & Mood</label>
+                        <div class="relative">
+                            <input type="text" id="environment" name="environment" placeholder="e.g., cozy apartment interior, morning sunlight" 
+                                   class="form-input">
+                            <button type="button" class="field-random-btn absolute right-2 top-2 text-gray-400 dark:text-gray-500 hover:text-primary-500 dark:hover:text-primary-400" data-field="environment">
+                                <i class="fas fa-random"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="composition" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Composition & Framing</label>
+                        <div class="relative">
+                            <input type="text" id="composition" name="composition" placeholder="e.g., close-up shot, rule of thirds" 
+                                   class="form-input">
+                            <button type="button" class="field-random-btn absolute right-2 top-2 text-gray-400 dark:text-gray-500 hover:text-primary-500 dark:hover:text-primary-400" data-field="composition">
+                                <i class="fas fa-random"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="lighting" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Lighting & Color</label>
+                        <div class="relative">
+                            <input type="text" id="lighting" name="lighting" placeholder="e.g., warm golden light, soft shadows" 
+                                   class="form-input">
+                            <button type="button" class="field-random-btn absolute right-2 top-2 text-gray-400 dark:text-gray-500 hover:text-primary-500 dark:hover:text-primary-400" data-field="lighting">
+                                <i class="fas fa-random"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="camera" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Camera & Technical Specs</label>
+                        <div class="relative">
+                            <input type="text" id="camera" name="camera" placeholder="e.g., shot on Nikon D850, 85mm f/1.4 lens" 
+                                   class="form-input">
+                            <button type="button" class="field-random-btn absolute right-2 top-2 text-gray-400 dark:text-gray-500 hover:text-primary-500 dark:hover:text-primary-400" data-field="camera">
+                                <i class="fas fa-random"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="style" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Style & Quality Keywords</label>
+                        <div class="relative">
+                            <input type="text" id="style" name="style" placeholder="e.g., photorealistic, highly detailed, professional" 
+                                   class="form-input">
+                            <button type="button" class="field-random-btn absolute right-2 top-2 text-gray-400 dark:text-gray-500 hover:text-primary-500 dark:hover:text-primary-400" data-field="style">
+                                <i class="fas fa-random"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="negative" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Negative Prompts</label>
+                    <div class="relative">
+                        <input type="text" id="negative" name="negative" placeholder="e.g., blurry, low quality, distorted, oversaturated" 
+                               class="form-input">
+                        <button type="button" class="field-random-btn absolute right-2 top-2 text-gray-400 dark:text-gray-500 hover:text-primary-500 dark:hover:text-primary-400" data-field="negative">
+                            <i class="fas fa-random"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap justify-between gap-2 pt-4">
+                    <div class="flex gap-2">
+                        <button type="button" id="randomizeBtn" class="btn-primary bg-green-600 hover:bg-green-700 focus:ring-green-500">
+                            <i class="fas fa-random mr-2"></i> Randomize All
+                        </button>
+                        <button type="button" id="clearBtn" class="btn-secondary">
+                            <i class="fas fa-trash-alt mr-2"></i> Clear All
+                        </button>
+                    </div>
+                    <div>
+                        <button type="button" id="savePresetBtn" class="btn-primary bg-purple-600 hover:bg-purple-700 focus:ring-purple-500">
+                            <i class="fas fa-save mr-2"></i> Save Preset
+                        </button>
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <div class="flex justify-between items-center mb-1">
+                        <label for="output" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Generated Prompt</label>
+                        <div id="copyStatus" class="text-sm text-green-600 dark:text-green-400 opacity-0 transition-opacity duration-1000">
+                            <i class="fas fa-check-circle mr-1"></i> Copied to clipboard
+                        </div>
+                    </div>
+                    <div class="relative">
+                        <textarea id="output" rows="3" readonly class="form-output"></textarea>
+                        <button type="button" id="copyBtn" class="absolute bottom-2 right-2 inline-flex items-center px-2 py-1 border border-transparent rounded text-xs font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500">
+                            <i class="fas fa-copy mr-1"></i> Copy
+                        </button>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <label for="negativeOutput" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Negative Prompt</label>
+                        <div class="relative">
+                            <textarea id="negativeOutput" rows="2" readonly class="form-output"></textarea>
+                            <button type="button" id="copyNegativeBtn" class="absolute bottom-2 right-2 inline-flex items-center px-2 py-1 border border-transparent rounded text-xs font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                <i class="fas fa-copy mr-1"></i> Copy
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end mt-3">
+                        <button type="button" id="copyBothBtn" class="btn-primary">
+                            <i class="fas fa-copy mr-1"></i> Copy Both
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </main>
+
+        <div id="savedPresets" class="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 hidden transition-colors duration-200">
+            <h2 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Saved Presets</h2>
+            <div id="presetList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Presets will be added here dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM elements
+        const form = document.getElementById('promptForm');
+        const outputField = document.getElementById('output');
+        const negativeOutputField = document.getElementById('negativeOutput');
+        const copyBtn = document.getElementById('copyBtn');
+        const copyNegativeBtn = document.getElementById('copyNegativeBtn');
+        const copyBothBtn = document.getElementById('copyBothBtn');
+        const randomizeBtn = document.getElementById('randomizeBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const savePresetBtn = document.getElementById('savePresetBtn');
+        const copyStatus = document.getElementById('copyStatus');
+        const savedPresetsContainer = document.getElementById('savedPresets');
+        const presetList = document.getElementById('presetList');
+        const fieldRandomBtns = document.querySelectorAll('.field-random-btn');
+        const themeToggle = document.getElementById('themeToggle');
+        
+        const inputFields = [
+            'subject', 'environment', 'composition', 
+            'lighting', 'camera', 'style', 'negative'
+        ];
+
+        // Auto-copy flag
+        let autoCopyEnabled = true;
+
+        // Load saved presets from localStorage
+        const savedPresets = JSON.parse(localStorage.getItem('photoPromptPresets')) || [];
+        
+        // Initialize the app
+        initApp();
+
+        function initApp() {
+            // Set up theme preference
+            initTheme();
+            
+            // Set up event listeners
+            inputFields.forEach(field => {
+                const input = document.getElementById(field);
+                input.addEventListener('input', handleInputChange);
+            });
+
+            // Set up individual field randomizers
+            fieldRandomBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const field = btn.dataset.field;
+                    if (variations[field]) {
+                        document.getElementById(field).value = getRandomItem(variations[field]);
+                        updateOutput();
+                    }
+                });
+            });
+
+            // Theme toggle
+            themeToggle.addEventListener('click', toggleTheme);
+
+            // Show saved presets if any exist
+            updatePresetsDisplay();
+        }
+
+        function initTheme() {
+            // Check for saved theme preference or respect OS preference
+            const savedTheme = localStorage.getItem('theme');
+            const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            
+            if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }
+
+        function toggleTheme() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        function handleInputChange() {
+            updateOutput();
+        }
+
+        // Predefined variations for each component (20 options each)
+        const variations = {
+            environment: [
+                "cozy apartment interior, morning sunlight, peaceful atmosphere",
+                "misty forest at dawn, ethereal, mysterious",
+                "bustling cityscape at night, neon lights, urban energy",
+                "serene beach at sunset, golden hour, tranquil",
+                "rustic cabin in snow-covered mountains, warm fireplace glow",
+                "lush tropical jungle, vibrant, exotic",
+                "abandoned industrial warehouse, gritty, dramatic",
+                "elegant Victorian mansion, moody, historical",
+                "futuristic sci-fi metropolis, high-tech, sleek",
+                "underwater coral reef, dreamlike, surreal",
+                "vast desert landscape, harsh sun, desolate beauty",
+                "rainy city streets at night, reflective surfaces, melancholic",
+                "enchanted garden, magical, whimsical",
+                "classic art museum, cultured, sophisticated",
+                "countryside farmhouse, nostalgic, idyllic",
+                "steampunk workshop, intricate, brass and copper tones",
+                "zen Japanese garden, minimalist, harmonious",
+                "stormy ocean, powerful waves, dramatic weather",
+                "ancient ruins, archaeological, mysterious",
+                "cozy coffee shop, warm ambiance, inviting"
+            ],
+            composition: [
+                "close-up shot, rule of thirds, shallow depth of field",
+                "wide angle panorama, expansive, capturing scale",
+                "overhead aerial perspective, geometric patterns visible",
+                "extreme macro shot, intricate details revealed",
+                "dutch angle, dynamic tension, cinematic framing",
+                "symmetrical composition, balanced, formal",
+                "leading lines drawing eye to focal point",
+                "silhouette against bright background, dramatic contrast",
+                "frame within a frame composition, layered depth",
+                "low angle shot, imposing, powerful perspective",
+                "split-field composition, juxtaposition of elements",
+                "rule of odds, visual harmony, pleasing arrangement",
+                "diagonal composition, dynamic energy, movement",
+                "minimalist negative space emphasizing subject",
+                "foreground framing elements adding depth",
+                "bokeh background, subject isolation, dreamy quality",
+                "layered composition, multiple planes of focus",
+                "golden ratio spiral composition, classical balance",
+                "repetition of elements creating rhythm and pattern",
+                "environmental portrait showing context and character"
+            ],
+            lighting: [
+                "warm golden light, soft shadows, muted color palette",
+                "dramatic chiaroscuro lighting, high contrast, moody",
+                "cool blue twilight, ethereal glow, mysterious atmosphere",
+                "high-key lighting, bright and airy, minimal shadows",
+                "low-key lighting, dramatic shadows, noir-inspired",
+                "split lighting, half illuminated face, character study",
+                "rim lighting silhouetting subject against dark background",
+                "dappled light filtering through trees, organic patterns",
+                "golden hour sunset glow, warm orange tones",
+                "harsh midday sun, strong shadows, vibrant colors",
+                "soft diffused light, gentle gradients, dreamy quality",
+                "blue hour lighting, twilight ambiance, serene mood",
+                "neon lighting, cyberpunk aesthetic, vibrant colors",
+                "candlelight, intimate, warm amber glow",
+                "foggy diffusion, mysterious atmosphere, limited visibility",
+                "backlit silhouette, dramatic outline, mysterious",
+                "studio three-point lighting, professional, controlled",
+                "bioluminescent glow, otherworldly, magical quality",
+                "high contrast black and white, timeless, dramatic",
+                "colorful gel lighting, creative, artistic expression"
+            ],
+            camera: [
+                "shot on Nikon D850, 85mm f/1.4 lens, ISO 100",
+                "Canon EOS R5, 24-70mm f/2.8 lens, perfect focus",
+                "Hasselblad medium format, 50MP, incredible detail",
+                "Sony A7SIII, low-light performance, cinematic quality",
+                "Leica M10, 35mm Summilux lens, street photography",
+                "8x10 large format film camera, unparalleled resolution",
+                "GFX 100S medium format, 100-megapixel resolution",
+                "ARRI Alexa cinema camera, anamorphic lens, cinematic",
+                "vintage Polaroid camera, authentic film texture",
+                "Lomography film camera, grainy, nostalgic aesthetic",
+                "iPhone 13 Pro computational photography, portrait mode",
+                "drone aerial photography, DJI Mavic 3 Pro, bird's eye view",
+                "underwater housing, Canon 5D Mark IV, aquatic clarity",
+                "RED Digital Cinema camera, 8K resolution, RAW format",
+                "tilt-shift photography, miniature effect, selective focus",
+                "fisheye lens, 180-degree field of view, distorted perspective",
+                "telephoto 400mm lens, compressed perspective, bokeh",
+                "twin-lens reflex medium format, square frame, retro",
+                "pinhole camera, dreamlike softness, infinite depth of field",
+                "macro lens, 1:1 reproduction, extreme close-up detail"
+            ],
+            style: [
+                "photorealistic, highly detailed, professional photography, sharp focus, 4k",
+                "hyperrealistic, indistinguishable from reality, perfect detail, 8k resolution",
+                "photographic realism, DSLR photography, award-winning photojournalism",
+                "documentary style, authentic photorealism, journalistic approach",
+                "professional fashion photography, high-end production value, studio lighting",
+                "National Geographic style, breathtaking realism, authentic documentation",
+                "fine art photography, gallery-worthy, dramatic lighting, natural colors",
+                "commercial photography aesthetic, polished, professional retouching",
+                "analog film photography, genuine film grain, authentic color science",
+                "black and white photography, rich contrast, fine details, dramatic shadows",
+                "HDR photography, natural expanded dynamic range, realistic tones",
+                "portrait studio photography, perfect skin texture, natural expressions",
+                "professional architectural photography, precise lines, perfect perspective",
+                "wildlife photography, natural habitat, authentic animal behavior",
+                "street photography, candid moment, authentic scene, realistic colors",
+                "landscape photography, natural vista, realistic atmospheric conditions",
+                "photojournalistic style, authentic moment, real-world documentation",
+                "minimalist photography, elegant simplicity, natural elements, realistic",
+                "fashion editorial photography, high-end magazine quality, realistic details",
+                "product photography, commercial quality, natural materials, realistic textures"
+            ],
+            negative: [
+                "cartoon, anime, illustration, painting, drawing, 3d render, cgi, computer generated",
+                "artificial, unnatural, synthetic, plastic-looking, fake, airbrushed, overly-perfect",
+                "poor composition, amateur, badly framed, overprocessed, unnatural colors",
+                "overexposed, blown out highlights, harsh unflattering lighting, unnatural glow",
+                "pixelated, low resolution, poor quality, compressed, artifacts, digital noise",
+                "watermarks, signatures, text overlays, annotations, borders, frames",
+                "heavily filtered, Instagram effect, over-saturated, unrealistic colors",
+                "out of focus, soft focus, motion blur, camera shake, blurry details",
+                "flash photography, harsh shadows, red-eye, unnatural reflections",
+                "desaturated, washed out colors, faded, dull palette, flat lighting",
+                "noisy, excessive grain, high ISO artifacts, digital sensor noise",
+                "lens flare, dust spots, dirty lens, optical aberrations, chromatic aberration",
+                "overprocessed HDR, unrealistic, cartoon-like effect, oversaturated colors",
+                "poor color balance, incorrect white balance, color cast, unnatural skin tones",
+                "bad lighting, unflattering shadows, poor contrast, flat lighting",
+                "stock photo look, generic, commercial, artificial poses, forced expressions",
+                "composited, photoshopped, manipulated, distorted proportions, warping",
+                "fisheye distortion, barrel distortion, perspective issues, stretched edges",
+                "underexposed, crushed blacks, muddy shadows, lacking detail in dark areas",
+                "digital artifacts, banding, posterization, clipping, unrealistic textures"
+            ]
+        };
+
+        // Function to generate and update the prompt output
+        function updateOutput() {
+            const values = {};
+            
+            // Get values from all input fields
+            inputFields.forEach(field => {
+                values[field] = document.getElementById(field).value.trim();
+            });
+
+            // Add photorealistic base terms if style is empty
+            if (!values.style) {
+                values.style = "photorealistic, 4k, highly detailed, professional photography";
+            } else if (!values.style.toLowerCase().includes("photorealistic")) {
+                // Ensure photorealistic is included
+                values.style = "photorealistic, " + values.style;
+            }
+            
+            // Build the main prompt with proper formatting
+            const mainComponents = [
+                values.subject,
+                values.environment,
+                values.composition,
+                values.lighting,
+                values.camera,
+                values.style
+            ];
+            
+            // Filter out empty components and join with semicolons
+            const mainPrompt = mainComponents
+                .filter(component => component)
+                .join('; ');
+            
+            // Update the main output field
+            outputField.value = mainPrompt;
+            
+            // Update the negative prompt field with additional anti-CGI terms
+            const baseNegativePrompts = "cartoon, anime, illustration, painting, drawing, 3d render, cgi, computer generated, digital art, anime, manga, artificial, unnatural";
+            
+            if (values.negative) {
+                negativeOutputField.value = values.negative + ", " + baseNegativePrompts;
+            } else {
+                negativeOutputField.value = baseNegativePrompts;
+            }
+            
+            // Auto-copy if enabled and there's content
+            if (autoCopyEnabled && mainPrompt) {
+                copyToClipboard('main');
+            }
+        }
+
+        // Function to get a random item from an array
+        function getRandomItem(array) {
+            return array[Math.floor(Math.random() * array.length)];
+        }
+
+        // Randomize all fields button functionality
+        randomizeBtn.addEventListener('click', () => {
+            // Keep the subject as entered by the user
+            const userSubject = document.getElementById('subject').value.trim();
+            
+            // Randomize all other fields
+            Object.keys(variations).forEach(field => {
+                document.getElementById(field).value = getRandomItem(variations[field]);
+            });
+            
+            // Update the output
+            updateOutput();
+        });
+
+        // Clear all fields button functionality
+        clearBtn.addEventListener('click', () => {
+            inputFields.forEach(field => {
+                document.getElementById(field).value = '';
+            });
+            outputField.value = '';
+            negativeOutputField.value = '';
+        });
+
+        // Copy functionality with visual feedback
+        copyBtn.addEventListener('click', () => copyToClipboard('main'));
+        copyNegativeBtn.addEventListener('click', () => copyToClipboard('negative'));
+        copyBothBtn.addEventListener('click', () => copyToClipboard('both'));
+
+        function copyToClipboard(type = 'main') {
+            let textToCopy = '';
+            
+            switch(type) {
+                case 'main':
+                    if (!outputField.value) {
+                        alert('Please fill in at least the Subject field to generate a prompt.');
+                        return;
+                    }
+                    textToCopy = outputField.value;
+                    break;
+                case 'negative':
+                    if (!negativeOutputField.value) {
+                        alert('No negative prompt to copy.');
+                        return;
+                    }
+                    textToCopy = negativeOutputField.value;
+                    break;
+                case 'both':
+                    if (!outputField.value) {
+                        alert('Please fill in at least the Subject field to generate a prompt.');
+                        return;
+                    }
+                    textToCopy = outputField.value;
+                    if (negativeOutputField.value) {
+                        textToCopy += '\n\nNegative prompt:\n' + negativeOutputField.value;
+                    }
+                    break;
+            }
+            
+            // Use modern clipboard API if available
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(textToCopy)
+                    .then(showCopiedFeedback)
+                    .catch(err => {
+                        console.error('Failed to copy: ', err);
+                        fallbackCopyToClipboard(textToCopy, type);
+                    });
+            } else {
+                fallbackCopyToClipboard(textToCopy, type);
+            }
+        }
+
+        function fallbackCopyToClipboard(text, type) {
+            // Create a temporary textarea for copying
+            const tempTextarea = document.createElement('textarea');
+            tempTextarea.value = text;
+            document.body.appendChild(tempTextarea);
+            tempTextarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempTextarea);
+            
+            // Show feedback
+            showCopiedFeedback();
+        }
+
+        function showCopiedFeedback() {
+            copyStatus.classList.remove('opacity-0');
+            copyStatus.classList.add('opacity-100');
+            
+            setTimeout(() => {
+                copyStatus.classList.remove('opacity-100');
+                copyStatus.classList.add('opacity-0');
+            }, 2000);
+        }
+
+        // Save preset functionality
+        savePresetBtn.addEventListener('click', () => {
+            // Collect current values
+            const preset = {};
+            let hasContent = false;
+            
+            inputFields.forEach(field => {
+                const value = document.getElementById(field).value.trim();
+                preset[field] = value;
+                if (value) hasContent = true;
+            });
+            
+            // Don't save empty presets
+            if (!hasContent) {
+                alert('Please fill in at least one field to save a preset.');
+                return;
+            }
+            
+            // Add timestamp for ID
+            preset.id = Date.now();
+            preset.name = prompt('Enter a name for this preset:', 'My Preset') || 'Unnamed Preset';
+            
+            // Save to array and localStorage
+            savedPresets.push(preset);
+            localStorage.setItem('photoPromptPresets', JSON.stringify(savedPresets));
+            
+            // Update display
+            updatePresetsDisplay();
+        });
+
+        // Update presets display
+        function updatePresetsDisplay() {
+            if (savedPresets.length === 0) {
+                savedPresetsContainer.classList.add('hidden');
+                return;
+            }
+            
+            // Show container
+            savedPresetsContainer.classList.remove('hidden');
+            
+            // Clear existing presets
+            presetList.innerHTML = '';
+            
+            // Add each preset
+            savedPresets.forEach(preset => {
+                const presetEl = document.createElement('div');
+                presetEl.className = 'p-3 border border-gray-200 dark:border-gray-700 rounded-md hover:border-primary-300 dark:hover:border-primary-500 transition-colors';
+                
+                presetEl.innerHTML = `
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="font-medium text-gray-900 dark:text-white">${preset.name}</h3>
+                        <div class="flex gap-1">
+                            <button class="apply-preset-btn text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300" data-id="${preset.id}">
+                                <i class="fas fa-check-circle"></i>
+                            </button>
+                            <button class="delete-preset-btn text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300" data-id="${preset.id}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 truncate">${preset.subject || 'No subject'}</p>
+                `;
+                
+                presetList.appendChild(presetEl);
+            });
+            
+            // Add event listeners to preset buttons
+            document.querySelectorAll('.apply-preset-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const presetId = parseInt(e.currentTarget.dataset.id);
+                    const preset = savedPresets.find(p => p.id === presetId);
+                    
+                    if (preset) {
+                        // Apply preset values to fields
+                        inputFields.forEach(field => {
+                            document.getElementById(field).value = preset[field] || '';
+                        });
+                        
+                        // Update output
+                        updateOutput();
+                    }
+                });
+            });
+            
+            document.querySelectorAll('.delete-preset-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const presetId = parseInt(e.currentTarget.dataset.id);
+                    
+                    // Filter out the preset with matching id
+                    const newPresets = savedPresets.filter(p => p.id !== presetId);
+                    
+                    // Update the array and localStorage
+                    savedPresets.length = 0;
+                    savedPresets.push(...newPresets);
+                    localStorage.setItem('photoPromptPresets', JSON.stringify(savedPresets));
+                    
+                    // Update display
+                    updatePresetsDisplay();
+                });
+            });
+        }
+    </script>
+</body>
+</html> 
