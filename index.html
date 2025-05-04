@@ -190,6 +190,28 @@
                 <!-- Presets will be added here dynamically -->
             </div>
         </div>
+        
+        <div id="promptHistory" class="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 mb-6 transition-colors duration-200">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-medium text-gray-900 dark:text-white">Prompt History</h2>
+                <div class="flex gap-2">
+                    <button id="clearHistoryBtn" class="btn-secondary text-xs py-1 px-2">
+                        <i class="fas fa-trash-alt mr-1"></i> Clear History
+                    </button>
+                    <button id="toggleHistoryBtn" class="btn-secondary text-xs py-1 px-2">
+                        <i class="fas fa-chevron-up" id="historyCollapseIcon"></i>
+                    </button>
+                </div>
+            </div>
+            <div id="historyContent">
+                <div class="text-sm text-gray-500 dark:text-gray-400 italic mb-4">
+                    Recent prompts will appear here. Click on any prompt to restore it.
+                </div>
+                <div id="historyList" class="space-y-3">
+                    <!-- History items will be added here dynamically -->
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -208,6 +230,12 @@
         const presetList = document.getElementById('presetList');
         const fieldRandomBtns = document.querySelectorAll('.field-random-btn');
         const themeToggle = document.getElementById('themeToggle');
+        const promptHistoryContainer = document.getElementById('promptHistory');
+        const historyList = document.getElementById('historyList');
+        const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+        const toggleHistoryBtn = document.getElementById('toggleHistoryBtn');
+        const historyContent = document.getElementById('historyContent');
+        const historyCollapseIcon = document.getElementById('historyCollapseIcon');
         
         const inputFields = [
             'subject', 'environment', 'composition', 
@@ -216,10 +244,19 @@
 
         // Auto-copy flag
         let autoCopyEnabled = true;
+        
+        // History collapsed state
+        let historyCollapsed = false;
 
         // Load saved presets from localStorage
         const savedPresets = JSON.parse(localStorage.getItem('photoPromptPresets')) || [];
         
+        // Load prompt history from localStorage
+        const promptHistory = JSON.parse(localStorage.getItem('photoPromptHistory')) || [];
+        
+        // Maximum number of history items to keep
+        const MAX_HISTORY_ITEMS = 10;
+
         // Initialize the app
         initApp();
 
@@ -246,9 +283,18 @@
 
             // Theme toggle
             themeToggle.addEventListener('click', toggleTheme);
+            
+            // History toggle
+            toggleHistoryBtn.addEventListener('click', toggleHistory);
+            
+            // Clear history
+            clearHistoryBtn.addEventListener('click', clearHistory);
 
             // Show saved presets if any exist
             updatePresetsDisplay();
+            
+            // Show prompt history if any exists
+            updateHistoryDisplay();
         }
 
         function initTheme() {
@@ -451,10 +497,18 @@
             // Update the negative prompt field with additional anti-CGI terms
             const baseNegativePrompts = "cartoon, anime, illustration, painting, drawing, 3d render, cgi, computer generated, digital art, anime, manga, artificial, unnatural";
             
+            let negativePrompt = "";
             if (values.negative) {
-                negativeOutputField.value = values.negative + ", " + baseNegativePrompts;
+                negativePrompt = values.negative + ", " + baseNegativePrompts;
+                negativeOutputField.value = negativePrompt;
             } else {
-                negativeOutputField.value = baseNegativePrompts;
+                negativePrompt = baseNegativePrompts;
+                negativeOutputField.value = negativePrompt;
+            }
+            
+            // Add to history if there's content and not just a style edit
+            if (mainPrompt && values.subject) {
+                addToHistory(values, mainPrompt, negativePrompt);
             }
             
             // Auto-copy if enabled and there's content
@@ -662,6 +716,111 @@
                     updatePresetsDisplay();
                 });
             });
+        }
+
+        function toggleHistory() {
+            historyCollapsed = !historyCollapsed;
+            
+            if (historyCollapsed) {
+                historyContent.classList.add('hidden');
+                historyCollapseIcon.classList.remove('fa-chevron-up');
+                historyCollapseIcon.classList.add('fa-chevron-down');
+            } else {
+                historyContent.classList.remove('hidden');
+                historyCollapseIcon.classList.remove('fa-chevron-down');
+                historyCollapseIcon.classList.add('fa-chevron-up');
+            }
+        }
+        
+        function clearHistory() {
+            if (confirm('Are you sure you want to clear your prompt history?')) {
+                promptHistory.length = 0;
+                localStorage.setItem('photoPromptHistory', JSON.stringify(promptHistory));
+                updateHistoryDisplay();
+            }
+        }
+        
+        function updateHistoryDisplay() {
+            if (promptHistory.length === 0) {
+                promptHistoryContainer.classList.add('hidden');
+                return;
+            }
+            
+            // Show container
+            promptHistoryContainer.classList.remove('hidden');
+            
+            // Clear existing history items
+            historyList.innerHTML = '';
+            
+            // Add each history item (most recent first)
+            [...promptHistory].reverse().forEach((item, index) => {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'p-3 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer';
+                
+                const timestamp = new Date(item.timestamp).toLocaleString();
+                const subjectPreview = item.subject || 'No subject';
+                const promptPreview = item.mainPrompt.length > 70 
+                    ? item.mainPrompt.substring(0, 70) + '...' 
+                    : item.mainPrompt;
+                
+                historyItem.innerHTML = `
+                    <div class="flex justify-between items-center mb-1">
+                        <h3 class="font-medium text-gray-900 dark:text-white">${subjectPreview}</h3>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">${timestamp}</span>
+                    </div>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">${promptPreview}</p>
+                `;
+                
+                // Add event listener to restore this prompt
+                historyItem.addEventListener('click', () => {
+                    restoreFromHistory(item);
+                });
+                
+                historyList.appendChild(historyItem);
+            });
+        }
+        
+        function restoreFromHistory(historyItem) {
+            // Restore all fields from history
+            inputFields.forEach(field => {
+                document.getElementById(field).value = historyItem[field] || '';
+            });
+            
+            // Update output
+            updateOutput();
+            
+            // Scroll to top of the form
+            form.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        function addToHistory(values, mainPrompt, negativePrompt) {
+            // Create history item
+            const historyItem = {
+                ...values,
+                mainPrompt,
+                negativePrompt,
+                timestamp: Date.now()
+            };
+            
+            // Add to history array (avoid duplicates by checking main prompt)
+            const isDuplicate = promptHistory.some(item => 
+                item.mainPrompt === mainPrompt && item.negativePrompt === negativePrompt
+            );
+            
+            if (!isDuplicate) {
+                promptHistory.unshift(historyItem);
+                
+                // Limit history size
+                if (promptHistory.length > MAX_HISTORY_ITEMS) {
+                    promptHistory.pop();
+                }
+                
+                // Save to localStorage
+                localStorage.setItem('photoPromptHistory', JSON.stringify(promptHistory));
+                
+                // Update display
+                updateHistoryDisplay();
+            }
         }
     </script>
 </body>

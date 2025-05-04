@@ -77,6 +77,22 @@ The generator creates prompts in this format:
 
 Negative prompts are kept separate as some AI platforms have dedicated negative prompt fields.
 
+## 🚀 Future Updates
+
+Here's what's planned for upcoming versions:
+
+- **Prompt History**: Save your generation history for easy reference
+- **AI Model-Specific Templates**: Optimized presets for different AI models (Midjourney, DALL-E, Stable Diffusion)
+- **Image Preview Integration**: Preview your prompt using integrated API connections
+- **Advanced Randomization**: Weighted randomization to prioritize certain styles
+- **Prompt Analysis**: Get suggestions to improve your prompt's effectiveness
+- **Export/Import Configuration**: Share your variations and presets with others
+- **Multi-Language Support**: Use the tool in your preferred language
+- **Community Presets**: Browse and use presets shared by other users
+- **Mobile App**: Native mobile application for iOS and Android
+
+Have suggestions for future features? Open an issue or submit a pull request!
+
 ## 📝 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
